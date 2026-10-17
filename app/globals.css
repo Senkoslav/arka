@@ -96,6 +96,7 @@ html.no-gl .fallback-photo { display: block; }
 html.no-gl .viewer .hud, html.no-gl .viewer .hint { display: none; }
 .tour-steps { position: relative; margin-top: -100vh; margin-top: -100svh; z-index: 2; }
 .step { min-height: 100vh; min-height: 100svh; display: flex; align-items: center; }
+.step .wrap { width: 100%; } /* иначе flex сжимает сетку и карточка уезжает в центр — под реплику гида */
 .step .card { max-width: 600px; display: grid; gap: 18px; padding-block: 120px 80px; }
 .step h1 { font-size: clamp(2.5rem, 6vw, 4.7rem); font-weight: 800; line-height: .98; }
 .step h2 { font-size: clamp(2rem, 5vw, 3.6rem); }
@@ -112,21 +113,34 @@ html.no-gl .viewer .hud, html.no-gl .viewer .hint { display: none; }
 .progress span { width: 8px; height: 8px; border-radius: 50%; border: 1px solid #c9d1d3; transition: background .3s; }
 .progress span.on { background: var(--amber); border-color: var(--amber); }
 
-/* гид — фирменный персонаж */
-.guide { position: absolute; right: clamp(16px, 6vw, 90px); bottom: 0; z-index: 3; display: flex; align-items: flex-end; gap: 14px; pointer-events: none; }
-.guide .figure-wrap { width: clamp(130px, 14vw, 210px); aspect-ratio: 3 / 4.4; position: relative; }
+/* гид — фирменный персонаж. Пропорции кадра и положение головы — из холста scripts/guide-poses.mjs */
+.guide { position: absolute; right: calc(var(--gut) + 64px); bottom: 0; z-index: 3; display: flex; align-items: flex-end; gap: 14px; pointer-events: none; }
+.guide .figure-wrap { height: min(64vh, 40vw, 600px); height: min(64svh, 40vw, 600px); aspect-ratio: 610 / 1200; position: relative; }
+.guide .figure-wrap::after { content: ""; position: absolute; left: 44%; width: 38%; bottom: -6px; height: 22px; background: radial-gradient(closest-side, rgb(0 0 0 / .45), transparent); }
 .guide img, .guide svg.ph { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: bottom; }
+.guide img { opacity: 0; transition: opacity .3s ease .12s; }
+.guide img.on { opacity: 1; z-index: 1; transition-delay: 0s; }
 .guide img[hidden] + svg.ph { display: block; }
-.bubble { position: absolute; right: 12px; bottom: calc(100% - 28px); width: min(290px, 60vw); background: #f8f7f4; color: #1f2b31; border-radius: 16px 16px 4px 16px; padding: 14px 16px; font-size: .95rem; line-height: 1.45; box-shadow: 0 10px 30px rgb(0 0 0 / .25); }
+/* уголок пузыря — у щеки гида: голова занимает ~57–81% ширины кадра, подбородок — на ~11% высоты */
+.bubble { position: absolute; z-index: 2; right: 45%; bottom: 87%; width: min(290px, 60vw); background: #f8f7f4; color: #1f2b31; border-radius: 16px 16px 4px 16px; padding: 14px 16px; font-size: .95rem; line-height: 1.45; box-shadow: 0 10px 30px rgb(0 0 0 / .25); }
 .bubble b { display: block; font-family: var(--mono); font-weight: 500; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #5b676c; margin-bottom: 4px; }
-@media (max-width: 760px) {
-  .guide { right: 8px; }
-  .guide .figure-wrap { width: 112px; }
-  .bubble { width: min(250px, 66vw); font-size: .86rem; }
+/* планшеты и телефоны: текст шага сверху, гид внизу справа, реплика — слева от кадра на уровне головы
+   (за пределами кадра, чтобы не закрывать вытянутую руку) */
+@media (max-width: 980px) {
+  .guide { right: var(--gut); }
+  .guide .figure-wrap { height: min(30vh, 320px); height: min(30svh, 320px); }
+  .bubble { right: calc(100% + 8px); bottom: auto; top: 2%; width: min(290px, calc(100vw - 2 * var(--gut) - 100% - 8px)); border-radius: 16px 4px 16px 16px; }
   .step { align-items: flex-start; }
-  .step .card { padding-block: 100px 260px; }
+  .step .card { padding-block: 100px 340px; }
   .progress { display: none; }
   .tour-stage .shade { background: linear-gradient(180deg, rgb(14 19 21 / .78) 0%, rgb(14 19 21 / .25) 55%, rgb(14 19 21 / .55) 100%); }
+}
+@media (max-width: 760px) {
+  .guide .figure-wrap { height: min(32vh, 230px); height: min(32svh, 230px); }
+  .bubble { font-size: .86rem; }
+  .step .card { padding-block: 100px 260px; }
+  /* на первом экране реплика закрыла бы кнопки — она появляется, когда гость начинает листать */
+  .guide[data-intro] .bubble { visibility: hidden; }
 }
 
 /* ---------- sections ---------- */
@@ -256,7 +270,7 @@ footer .mk path, footer .mk polygon { stroke: #eef1ef; }
 footer .mk .d1f, footer .mk .ltr, footer .mk .slogan { fill: #eef1ef; }
 footer .small { font-size: .8rem; color: #8a9599; max-width: 60ch; }
 
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .scroll-hint::after { animation: none; } }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .scroll-hint::after { animation: none; } .guide img { transition: none; } }
 
 /* next/image: размеры задаёт CSS, а не атрибуты width/height */
 .place img { height: auto; }

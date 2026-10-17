@@ -58,12 +58,19 @@ const STEPS: Array<{ say: string; body: React.ReactNode }> = [
 ];
 
 /**
- * Позы гида (фирменный персонаж, часть 2 тестового).
- * Положите PNG/WebP в /public/img и перечислите здесь по шагам прогулки (0–4).
+ * Позы гида (фирменный персонаж, часть 2 тестового) — по одной на шаг прогулки (0–4).
+ * Файлы готовит scripts/guide-poses.mjs: все позы на одном холсте, поэтому при смене
+ * меняется только жест, а фигура стоит на месте.
  * Пустая строка — для этого шага берётся первая доступная поза; если поз нет совсем — силуэт-заглушка.
- * Пример: ['/img/guide-0.webp', '/img/guide-1.webp', '/img/guide-2.webp', '/img/guide-3.webp', '/img/guide-4.webp']
  */
-const GUIDE_POSES: string[] = [];
+const GUIDE_POSES: string[] = [
+  '/img/guide-wave.webp',    // приветствие
+  '/img/guide-present.webp', // открытый зал
+  '/img/guide-up.webp',      // потолок 4,5 м и светильники
+  '/img/guide-point.webp',   // арочные окна
+  '/img/guide-present.webp', // вид на Библиотеку; сюда встанет guide-tablet.webp (поза с планшетом)
+];
+const POSE_FILES = [...new Set(GUIDE_POSES.filter(Boolean))];
 
 function poseFor(step: number): string | null {
   return GUIDE_POSES[step] || GUIDE_POSES.find(Boolean) || null;
@@ -72,10 +79,12 @@ function poseFor(step: number): string | null {
 export default function Tour() {
   const { tourSection, tourHost } = useScene();
   const [active, setActive] = useState(0);
+  const [intro, setIntro] = useState(true); // страница ещё не прокручена — первый экран
 
   useEffect(() => {
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const ctx = gsap.context(() => {
+      ScrollTrigger.create({ trigger: tourSection.current, start: 'top+=120 top', onToggle: self => setIntro(!self.isActive) });
       gsap.utils.toArray<HTMLElement>('.step').forEach((st, i) => {
         ScrollTrigger.create({ trigger: st, start: 'top 55%', end: 'bottom 55%', onToggle: self => { if (self.isActive) setActive(i); } });
         if (i > 0 && !reduce) gsap.from(st.querySelectorAll('.card > *'), {
@@ -106,12 +115,13 @@ export default function Tour() {
         <div className="progress" aria-hidden="true">
           {STEPS.map((_, i) => <span key={i} className={i === active ? 'on' : ''} />)}
         </div>
-        <div className="guide" aria-hidden="true">
+        <div className="guide" aria-hidden="true" data-intro={active === 0 && intro ? '' : undefined}>
           <div className="figure-wrap">
             <div className="bubble" id="bubble"><b>Анна · администратор</b><span>{STEPS[active].say}</span></div>
+            {/* Все позы в DOM сразу: загружаются заранее, а смена — плавная, без мигания */}
             {pose
               // eslint-disable-next-line @next/next/no-img-element
-              ? <img src={pose} alt="" />
+              ? POSE_FILES.map(src => <img key={src} src={src} alt="" decoding="async" className={src === pose ? 'on' : undefined} />)
               : <GuidePlaceholder />}
           </div>
         </div>
