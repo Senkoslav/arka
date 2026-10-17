@@ -84,7 +84,7 @@ export default function Tour() {
   useEffect(() => {
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const ctx = gsap.context(() => {
-      ScrollTrigger.create({ trigger: tourSection.current, start: 'top+=120 top', onToggle: self => setIntro(!self.isActive) });
+      ScrollTrigger.create({ trigger: tourSection.current, start: 'top+=120 top', end: 'max', onToggle: self => setIntro(!self.isActive) });
       gsap.utils.toArray<HTMLElement>('.step').forEach((st, i) => {
         ScrollTrigger.create({ trigger: st, start: 'top 55%', end: 'bottom 55%', onToggle: self => { if (self.isActive) setActive(i); } });
         if (i > 0 && !reduce) gsap.from(st.querySelectorAll('.card > *'), {

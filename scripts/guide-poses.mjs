@@ -11,6 +11,9 @@
 import sharp from 'sharp';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const MIRROR = true;
 // Холст в пикселях исходника: ось ног — на AX, нижний край ступней — на FEET.
@@ -49,13 +52,14 @@ for (const arg of args) {
     for (let x = 0; x < w; x++) if (solid(x, y)) { if (l < 0) l = x; r = x; }
     if (l >= 0) { axisSum += (l + r) / 2; rows++; }
   }
+  if (!rows) throw new Error(`${file}: не найдены ноги — нужна фигура в полный рост`);
   const axis = axisSum / rows;
 
   // Брошь — золотые пиксели на левом лацкане (справа от оси в исходнике).
   // Золото отличаем от кожи по G/R: у золота ≈ 0.85, у кожи ≈ 0.7.
   const gold = [];
   for (let y = Math.round(top + tall * 0.17); y < top + tall * 0.3; y++) {
-    for (let x = Math.round(axis + 20); x < axis + 150; x++) {
+    for (let x = Math.round(axis + 20); x < Math.min(axis + 150, w); x++) {
       const i = px(x, y), R = src[i], G = src[i + 1], B = src[i + 2];
       if (src[i + 3] > 200 && R > 150 && G > R * 0.75 && B < G * 0.8 && R - B > 50) gold.push([x, y]);
     }
@@ -95,7 +99,7 @@ for (const arg of args) {
   }
   if (clipped) console.warn(`${name}: ${clipped} px фигуры не поместились на холст — увеличьте CW/AX`);
 
-  const dest = path.join('public', 'img', `guide-${name}.webp`);
+  const dest = path.join(ROOT, 'public', 'img', `guide-${name}.webp`);
   const res = await sharp(out, { raw: { width: CW, height: CH, channels: 4 } })
     .resize({ height: OUT_H })
     .webp({ quality: 84, alphaQuality: 90, effort: 6 })
