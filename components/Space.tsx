@@ -13,7 +13,13 @@ const LAYOUTS: Array<{ id: LayoutName; title: string; note: string }> = [
 const VIEWS: Array<[ViewName, string]> = [['plan', 'Сверху'], ['inside', 'От входа'], ['window', 'У окна']];
 
 export default function Space() {
-  const { spaceHost, layout, setLayout, view, setView, mood, setMood } = useScene();
+  const { spaceHost, layout, setLayout, view, setView, rotate, mood, setMood } = useScene();
+  // Стрелки поворачивают зал, если модель в фокусе (мышь и палец — перетаскиванием)
+  const onKey = (e: React.KeyboardEvent) => {
+    const step = ({ ArrowLeft: [-.15, 0], ArrowRight: [.15, 0], ArrowUp: [0, -.08], ArrowDown: [0, .08] } as Record<string, [number, number]>)[e.key];
+    if (!step) return;
+    e.preventDefault(); rotate(step[0], step[1]);
+  };
   return (
     <section className="block space" id="space">
       <div className="wrap">
@@ -24,7 +30,7 @@ export default function Space() {
         </div>
         <div className="space-grid">
           <div className="viewer">
-            <div className="gl-host" ref={spaceHost} />
+            <div className="gl-host" ref={spaceHost} tabIndex={0} role="application" aria-roledescription="3D-модель" aria-label="Модель зала. Стрелки поворачивают вид, кнопки сверху меняют ракурс." onKeyDown={onKey} />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img className="fallback-photo" src="/img/hall-windows.webp" alt="Зал АРКА 123: два арочных окна, пол «ёлочкой», световые панели" />
             <div className="hud">
@@ -38,7 +44,7 @@ export default function Space() {
                 <button type="button" aria-pressed={mood === 1} onClick={() => setMood(1)}>Вечер</button>
               </div>
             </div>
-            <div className="hint">Потяните, чтобы повернуть</div>
+            <div className="hint">Потяните или нажмите стрелки, чтобы повернуть</div>
           </div>
           <div>
             <div className="layouts" role="group" aria-label="Формат рассадки">

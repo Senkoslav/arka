@@ -4,7 +4,7 @@
 Репозиторий — github.com/Senkoslav/arka, ветка `main`; деплой — Vercel из GitHub, настройки в `vercel.json`.
 
 - Язык интерфейса, комментариев и сообщений коммитов — русский.
-- Стили — только `app/globals.css` (обычный CSS, токены в `:root`, тёмная тема через `prefers-color-scheme` и `[data-theme]`). Tailwind не используется.
+- Стили — только `app/globals.css` (обычный CSS, токены в `:root`, тёмная тема через `prefers-color-scheme` и `[data-theme]`). Tailwind не используется. Цвета — только переменными: тёмные секции (`--deep`, `--deep-2`, `--deep-line`, `--footer`) и текст на них (`--on-dark`, `--on-dark-soft`, `--on-dark-muted`, `--on-dark-faint`). Зоны нажатия — от 44 px на сенсорных экранах.
 - 3D: `lib/arkaScene.ts` — императивный модуль three.js **0.147** (не обновлять без перенастройки света). React-обёртка — `components/SceneProvider.tsx`; сцена грузится динамическим `import()` только на клиенте.
 - Анимации — GSAP 3 + ScrollTrigger; в компонентах использовать `gsap.context()` и откатывать в cleanup.
 - Размеры зала (123 м², потолок 4,5 м, окна 4 × 3,5 м) — из ТЗ; вместимость считается в `lib/layouts.ts`, не хардкодить числа.

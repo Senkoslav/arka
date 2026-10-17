@@ -15,6 +15,8 @@ export interface ArkaScene {
   setTourProgress(p: number): void;
   setMode(m: 'tour' | 'orbit', view?: ViewName): void;
   goView(name: ViewName, instant?: boolean): void;
+  /** Поворот камеры вокруг центра зала (радианы) — для управления с клавиатуры */
+  rotate(dAzimuth: number, dPolar: number): void;
   setMood(m: number): void;
   setLayout(name: LayoutName): void;
   setVisible(v: boolean): void;
@@ -524,6 +526,13 @@ export function buildScene(container: HTMLElement): ArkaScene {
       if (m === 'orbit') goView(view || 'plan', true);
     },
     goView,
+    rotate(dAz, dPol) {
+      if (mode !== 'orbit') return;
+      const off = camera.position.clone().sub(controls.target);
+      const s = new T.Spherical().setFromVector3(off);
+      s.theta += dAz; s.phi = Math.min(controls.maxPolarAngle, Math.max(0.2, s.phi + dPol));
+      off.setFromSpherical(s); camera.position.copy(controls.target).add(off);
+    },
     setMood(m) { moodTarget = m; },
     setLayout,
     setVisible(v) { visible = v; if (v) clock3.getDelta(); },

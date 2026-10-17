@@ -16,6 +16,7 @@ interface SceneCtx {
   setLayout(l: LayoutName): void;
   view: ViewName;
   setView(v: ViewName): void;
+  rotate(dAzimuth: number, dPolar: number): void;
   mood: number;
   setMood(m: number): void;
 }
@@ -107,13 +108,14 @@ export function SceneProvider({ children }: { children: ReactNode }) {
     viewRef.current = v; setViewState(v);
     if (modeRef.current === 'orbit') sceneRef.current?.goView(v);
   }, []);
+  const rotate = useCallback((a: number, p: number) => { if (modeRef.current === 'orbit') sceneRef.current?.rotate(a, p); }, []);
   const setMood = useCallback((m: number) => {
     moodRef.current = m; setMoodState(m);
     if (modeRef.current === 'orbit') sceneRef.current?.setMood(m);
   }, []);
 
   return (
-    <Ctx.Provider value={{ tourSection, tourHost, spaceHost, layout, setLayout, view, setView, mood, setMood }}>
+    <Ctx.Provider value={{ tourSection, tourHost, spaceHost, layout, setLayout, view, setView, rotate, mood, setMood }}>
       {children}
     </Ctx.Provider>
   );
