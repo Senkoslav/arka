@@ -12,7 +12,7 @@ export default function Home() {
     <SceneProvider>
       <Preloader />
       <Header />
-      <main>
+      <main id="main">
         <Tour />
         <About />
         <Space />

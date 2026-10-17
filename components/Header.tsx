@@ -27,6 +27,15 @@ export default function Header() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  // Мобильное меню закрывается по Esc и нажатию мимо него
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { setOpen(false); document.querySelector<HTMLButtonElement>('.menu-btn')?.focus(); } };
+    const onDown = (e: PointerEvent) => { if (!(e.target as Element).closest('.site-header')) setOpen(false); };
+    document.addEventListener('keydown', onKey); document.addEventListener('pointerdown', onDown);
+    return () => { document.removeEventListener('keydown', onKey); document.removeEventListener('pointerdown', onDown); };
+  }, [open]);
+
   // Ховер логотипа: свет пробегает по арке, цифры подпрыгивают «раз-два-три»
   useEffect(() => {
     const el = logo.current!;
@@ -48,7 +57,8 @@ export default function Header() {
   }, []);
 
   return (
-    <header className={`site-header${solid ? ' solid' : ''}`} id="top">
+    <header className={`site-header${solid ? ' solid' : ''}${open ? ' menu-open' : ''}`} id="top">
+      <a className="skip" href="#main">Перейти к содержимому</a>
       <div className="wrap bar">
         <a href="#tour" className="logo" ref={logo} aria-label="АРКА 123, в начало">
           <LogoIcon className="icon" glint />

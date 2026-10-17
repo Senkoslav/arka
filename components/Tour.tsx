@@ -131,7 +131,7 @@ export default function Tour() {
       <div className="tour-steps">
         {STEPS.map((s, i) => (
           <div className="step" data-step={i} key={i}>
-            <div className="wrap"><div className="card">{s.body}</div></div>
+            <div className="wrap"><div className="card">{s.body}<p className="sr-only">Анна, администратор: {s.say}</p></div></div>
           </div>
         ))}
       </div>

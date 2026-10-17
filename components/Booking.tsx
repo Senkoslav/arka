@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import Image from 'next/image';
 import { CAPACITY, type LayoutName } from '@/lib/layouts';
 import { ADDONS, estimate, type AddonId } from '@/lib/pricing';
@@ -19,7 +19,10 @@ export default function Booking() {
   const [addons, setAddons] = useState<AddonId[]>([]);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [status, setStatus] = useState<string | null>(null);
+  const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
+  const [invalid, setInvalid] = useState<{ name?: boolean; phone?: boolean }>({});
+  const nameRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
 
   // Дата по умолчанию — через неделю (считаем на клиенте, чтобы не было расхождений с SSR)
   useEffect(() => {
@@ -37,13 +40,17 @@ export default function Booking() {
 
   function submit(e: FormEvent) {
     e.preventDefault();
-    if (!name.trim() || phone.replace(/\D/g, '').length < 9) {
-      setStatus('Укажите имя и телефон — администратор перезвонит, чтобы подтвердить дату.');
+    const bad = { name: !name.trim(), phone: phone.replace(/\D/g, '').length < 9 };
+    setInvalid(bad);
+    if (bad.name || bad.phone) {
+      const what = bad.name && bad.phone ? 'имя и телефон' : bad.name ? 'имя' : 'телефон полностью, например +375 29 123-45-67';
+      setStatus({ ok: false, text: `Укажите ${what} — администратор перезвонит, чтобы подтвердить дату.` });
+      (bad.name ? nameRef : phoneRef).current?.focus();
       return;
     }
     // TODO: отправка заявки (route handler / Telegram-бот / CRM)
     const when = date ? new Date(date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }) : 'выбранную дату';
-    setStatus(`Спасибо, ${name.trim()}! Заявка на ${when} собрана: ${totalText}. Это демо-сайт, поэтому заявка никуда не отправлена.`);
+    setStatus({ ok: true, text: `Спасибо, ${name.trim()}! Заявка на ${when} собрана: ${totalText}. Это демо-сайт, поэтому заявка никуда не отправлена.` });
   }
 
   return (
@@ -55,8 +62,8 @@ export default function Booking() {
           <p className="muted">Ищите арку между двумя высокими домами — через неё видно Национальную библиотеку. Вход с променада, парковка у дома.</p>
           <dl className="contact-list">
             <div><dt>Адрес</dt><dd>Минск, ул. Мстиславца, 10</dd></div>
-            <div><dt>Телефон</dt><dd>+375 29 123-01-23</dd></div>
-            <div><dt>Telegram</dt><dd>@arka123</dd></div>
+            <div><dt>Телефон</dt><dd><a href="tel:+375291230123">+375 29 123-01-23</a></dd></div>
+            <div><dt>Telegram</dt><dd><a href="https://t.me/arka123" target="_blank" rel="noopener noreferrer">@arka123</a></dd></div>
             <div><dt>Часы</dt><dd>ежедневно, 8:00–23:00</dd></div>
           </dl>
           <div className="place">
@@ -65,7 +72,7 @@ export default function Booking() {
           </div>
         </div>
 
-        <form className={`book${status ? ' sent' : ''}`} onSubmit={submit} noValidate>
+        <form className="book" onSubmit={submit} noValidate>
           <h3>Рассчитать и забронировать</h3>
           <div className="row2">
             <div className="field"><label htmlFor="f-date">Дата</label><input id="f-date" type="date" min={minDate} value={date} onChange={e => setDate(e.target.value)} required /></div>
@@ -89,15 +96,15 @@ export default function Booking() {
             </div>
           </div>
           <div className="row2">
-            <div className="field"><label htmlFor="f-name">Имя</label><input id="f-name" type="text" autoComplete="name" value={name} onChange={e => setName(e.target.value)} required /></div>
-            <div className="field"><label htmlFor="f-phone">Телефон</label><input id="f-phone" type="tel" autoComplete="tel" placeholder="+375" value={phone} onChange={e => setPhone(e.target.value)} required /></div>
+            <div className="field"><label htmlFor="f-name">Имя</label><input id="f-name" ref={nameRef} type="text" autoComplete="name" value={name} onChange={e => { setName(e.target.value); setInvalid(v => ({ ...v, name: false })); }} required aria-invalid={invalid.name || undefined} aria-describedby={invalid.name ? 'form-msg' : undefined} /></div>
+            <div className="field"><label htmlFor="f-phone">Телефон</label><input id="f-phone" ref={phoneRef} type="tel" inputMode="tel" autoComplete="tel" placeholder="+375" value={phone} onChange={e => { setPhone(e.target.value); setInvalid(v => ({ ...v, phone: false })); }} required aria-invalid={invalid.phone || undefined} aria-describedby={invalid.phone ? 'form-msg' : undefined} /></div>
           </div>
           <div className="total">
             <div><small>Предварительно</small><div className="muted" style={{ fontSize: '.85rem' }}>{note}</div></div>
             <b>{totalText}</b>
           </div>
           <button className="btn btn-amber" type="submit">Отправить заявку</button>
-          <div className="form-done" role="status">{status}</div>
+          <div id="form-msg" className={`form-msg${status ? (status.ok ? ' ok' : ' err') : ''}`} role={status?.ok === false ? 'alert' : 'status'}>{status?.text}</div>
         </form>
       </div>
     </section>
